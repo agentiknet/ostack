@@ -10,6 +10,8 @@
 
 ---
 
+**Built by [Oussama Ammar](https://oussamaammar.com)** ([@daedalium](https://x.com/daedalium)) — solo capitalist, venture builder, co-founder of [The Family](https://en.wikipedia.org/wiki/The_Family_(company)). Early investor in Stripe, Algolia, PayFit, Trainline. Forbes 30 Under 30 Europe. Currently building AI-era ventures from Dubai as a "Holding Company of One."
+
 > **Standing on the shoulders of a giant.**
 >
 > ostack is a fork of [gstack](https://github.com/garrytan/gstack) by [Garry Tan](https://x.com/garrytan) — Y Combinator President and legendary builder. Garry open-sourced gstack as an AI-powered engineering team for Claude Code, and made it free and MIT-licensed for everyone. That generosity is rare at his level, and it gave people like me a foundation that would have taken months to build from scratch. All credit for the original architecture, skills system, browser engine, and sprint philosophy goes to Garry and the gstack contributors.
