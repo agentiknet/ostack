@@ -10,7 +10,7 @@
 
 ---
 
-**Built by [Oussama Ammar](https://oussamaammar.com)** ([@daedalium](https://x.com/daedalium)) — solo capitalist, venture builder, co-founder of [The Family](https://en.wikipedia.org/wiki/The_Family_(company)). Early investor in Stripe, Algolia, PayFit, Trainline. Forbes 30 Under 30 Europe. Currently building AI-era ventures from Dubai as a "Holding Company of One."
+**Built by [Oussama Ammar](https://oussamaammar.com)** ([@daedalium](https://x.com/daedalium)) — solo capitalist and venture builder operating as a "Holding Company of One" from Dubai. Early investor in Stripe, Algolia, PayFit, Trainline. Previously co-founded [The Family](https://en.wikipedia.org/wiki/The_Family_(company)), a European startup accelerator whose portfolio raised $1.5B+.
 
 > **Standing on the shoulders of a giant.**
 >
