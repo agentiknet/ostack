@@ -3,7 +3,7 @@ name: setup-deploy
 version: 1.0.0
 description: |
   Configure deployment settings for /land-and-deploy. Detects your deploy
-  platform (Fly.io, Render, Vercel, Netlify, Heroku, GitHub Actions, custom),
+  platform (Fly.io, Render, Vercel, Netlify, Heroku, custom),
   production URL, health check endpoints, and deploy status commands. Writes
   the configuration to CLAUDE.md so all future deploys are automatic.
   Use when: "setup deploy", "configure deployment", "set up land-and-deploy",
@@ -105,14 +105,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -177,34 +173,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -284,11 +252,6 @@ Run the platform detection from the deploy bootstrap:
 [ -f Procfile ] && echo "PLATFORM:heroku"
 [ -f railway.json ] || [ -f railway.toml ] && echo "PLATFORM:railway"
 
-# GitHub Actions deploy workflows
-for f in .github/workflows/*.yml .github/workflows/*.yaml; do
-  [ -f "$f" ] && grep -qiE "deploy|release|production|staging|cd" "$f" 2>/dev/null && echo "DEPLOY_WORKFLOW:$f"
-done
-
 # Project type
 [ -f package.json ] && grep -q '"bin"' package.json 2>/dev/null && echo "PROJECT_TYPE:cli"
 ls *.gemspec 2>/dev/null && echo "PROJECT_TYPE:library"
@@ -342,14 +305,6 @@ If netlify.toml detected:
 2. Netlify deploys automatically on push
 3. Set health check: the production URL
 
-#### GitHub Actions only
-
-If deploy workflows detected but no platform config:
-
-1. Read the workflow file to understand what it does
-2. Extract the deploy target (if mentioned)
-3. Ask the user for the production URL
-
 #### Custom / Manual
 
 If nothing detected:
@@ -358,18 +313,16 @@ Use AskUserQuestion to gather the information:
 
 1. **How are deploys triggered?**
    - A) Automatically on push to main (Fly, Render, Vercel, Netlify, etc.)
-   - B) Via GitHub Actions workflow
-   - C) Via a deploy script or CLI command (describe it)
-   - D) Manually (SSH, dashboard, etc.)
-   - E) This project doesn't deploy (library, CLI, tool)
+   - B) Via a deploy script or CLI command (describe it)
+   - C) Manually (SSH, dashboard, etc.)
+   - D) This project doesn't deploy (library, CLI, tool)
 
 2. **What's the production URL?** (Free text — the URL where the app runs)
 
 3. **How can ostack check if a deploy succeeded?**
    - A) HTTP health check at a specific URL (e.g., /health, /api/status)
    - B) CLI command (e.g., `fly status`, `kubectl rollout status`)
-   - C) Check the GitHub Actions workflow status
-   - D) No automated way — just check the URL loads
+   - C) No automated way — just check the URL loads
 
 4. **Any pre-merge or post-merge hooks?**
    - Commands to run before merging (e.g., `bun run build`)
@@ -384,7 +337,7 @@ if it exists, or append it at the end.
 ## Deploy Configuration (configured by /setup-deploy)
 - Platform: {platform}
 - Production URL: {url}
-- Deploy workflow: {workflow file or "auto-deploy on push"}
+- Deploy trigger: {automatic on push / deploy command / manual}
 - Deploy status command: {command or "HTTP health check"}
 - Merge method: {squash/merge/rebase}
 - Project type: {web app / API / CLI / library}

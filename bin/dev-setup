@@ -44,7 +44,7 @@ elif [ -d "$OSTACK_LINK" ]; then
 fi
 ln -s "$REPO_ROOT" "$OSTACK_LINK"
 
-# 5. Create .agents/skills/ostack → repo root (for Codex/Gemini/Cursor)
+# 5. Create .agents/skills/ostack → repo root (for Codex)
 mkdir -p "$REPO_ROOT/.agents/skills"
 AGENTS_LINK="$REPO_ROOT/.agents/skills/ostack"
 if [ -L "$AGENTS_LINK" ]; then

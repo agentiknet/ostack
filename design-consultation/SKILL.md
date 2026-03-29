@@ -107,14 +107,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -179,34 +175,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -356,7 +324,7 @@ If browse is not available, rely on WebSearch results and your built-in design k
 - **Layer 2 (new and popular):** What are the search results and current design discourse saying? What's trending? What new patterns are emerging?
 - **Layer 3 (first principles):** Given what we know about THIS product's users and positioning — is there a reason the conventional design approach is wrong? Where should we deliberately break from the category norms?
 
-**Eureka check:** If Layer 3 reasoning reveals a genuine design insight — a reason the category's visual language fails THIS product — name it: "EUREKA: Every [category] product does X because they assume [assumption]. But this product's users [evidence] — so we should do Y instead." Log the eureka moment (see preamble).
+**Eureka check:** If Layer 3 reasoning reveals a genuine design insight — a reason the category's visual language fails THIS product — name it: "EUREKA: Every [category] product does X because they assume [assumption]. But this product's users [evidence] — so we should do Y instead." Carry that insight into the design system you propose.
 
 Summarize conversationally:
 > "I looked at what's out there. Here's the landscape: they converge on [patterns]. Most of them feel [observation — e.g., interchangeable, polished but generic, etc.]. The opportunity to stand out is [gap]. Here's where I'd play it safe and where I'd take a risk..."

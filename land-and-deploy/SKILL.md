@@ -2,7 +2,7 @@
 name: land-and-deploy
 version: 1.0.0
 description: |
-  Land and deploy workflow. Merges the PR, waits for CI and deploy,
+  Land and deploy workflow. Merges the PR, waits for deploy,
   verifies production health via canary checks. Takes over after /ship
   creates the PR. Use when: "merge", "land", "deploy", "merge and verify",
   "land it", "ship it to production".
@@ -101,14 +101,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -173,34 +169,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -301,9 +269,9 @@ readiness first.
 - **Pre-merge readiness gate (Step 3.5)** — this is the ONE confirmation before merge
 - GitHub CLI not authenticated
 - No PR found for this branch
-- CI failures or merge conflicts
+- Merge conflicts or blocked merge state
 - Permission denied on merge
-- Deploy workflow failure (offer revert)
+- Deploy verification failure (offer revert)
 - Production health issues detected by canary (offer revert)
 
 **Never stop for:**
@@ -337,38 +305,33 @@ gh pr view --json number,state,title,url,mergeStateStatus,mergeable,baseRefName,
 
 ## Step 2: Pre-merge checks
 
-Check CI status and merge readiness:
+Check merge readiness:
 
 ```bash
-gh pr checks --json name,state,status,conclusion
+gh pr view --json mergeable,mergeStateStatus
 ```
 
 Parse the output:
-1. If any required checks are **FAILING**: **STOP.** Show the failing checks.
-2. If required checks are **PENDING**: proceed to Step 3.
-3. If all checks pass (or no required checks): skip Step 3, go to Step 4.
-
-Also check for merge conflicts:
-```bash
-gh pr view --json mergeable -q .mergeable
-```
-If `CONFLICTING`: **STOP.** "PR has merge conflicts. Resolve them and push before landing."
+1. If `mergeable` is `CONFLICTING`: **STOP.** "PR has merge conflicts. Resolve them and push before landing."
+2. If `mergeStateStatus` is `BLOCKED`: **STOP.** Show the blocking merge state from GitHub.
+3. If GitHub is still calculating mergeability (`UNKNOWN` or empty): proceed to Step 3.
+4. Otherwise, continue to Step 3.5.
 
 ---
 
-## Step 3: Wait for CI (if pending)
+## Step 3: Wait for merge readiness (if pending)
 
-If required checks are still pending, wait for them to complete. Use a timeout of 15 minutes:
+If GitHub is still calculating mergeability, wait briefly for it to settle. Use a timeout of 2 minutes:
 
 ```bash
-gh pr checks --watch --fail-fast
+gh pr view --json mergeable,mergeStateStatus
 ```
 
-Record the CI wait time for the deploy report.
+Poll every 15 seconds until GitHub reports a stable merge state.
 
-If CI passes within the timeout: continue to Step 4.
-If CI fails: **STOP.** Show failures.
-If timeout (15 min): **STOP.** "CI has been running for 15 minutes. Investigate manually."
+If the PR becomes mergeable within the timeout: continue to Step 3.5.
+If it becomes conflicting or blocked: **STOP.**
+If timeout (2 min): **STOP.** "GitHub still hasn't resolved mergeability. Investigate manually."
 
 ---
 
@@ -507,7 +470,7 @@ Build the full readiness report:
 ║                                                          ║
 ║  DOCUMENTATION                                           ║
 ║  ├─ CHANGELOG:     Updated / NOT UPDATED (warning)       ║
-║  ├─ VERSION:       0.9.8.0 / NOT BUMPED (warning)        ║
+║  ├─ VERSION:       0.9.8 / NOT BUMPED (warning)          ║
 ║  └─ Doc release:   Run / NOT RUN (warning)               ║
 ║                                                          ║
 ║  PR BODY                                                 ║
@@ -626,18 +589,12 @@ echo "FRONTEND=$SCOPE_FRONTEND BACKEND=$SCOPE_BACKEND DOCS=$SCOPE_DOCS CONFIG=$S
 
 **Decision tree (evaluate in order):**
 
-1. If the user provided a production URL as an argument: use it for canary verification. Also check for deploy workflows.
+1. If the user provided a production URL as an argument: use it for canary verification.
 
-2. Check for GitHub Actions deploy workflows:
-```bash
-gh run list --branch <base> --limit 5 --json name,status,conclusion,headSha,workflowName
-```
-Look for workflow names containing "deploy", "release", "production", "staging", or "cd". If found: poll the deploy workflow in Step 6, then run canary.
+2. If SCOPE_DOCS is the only scope that's true (no frontend, no backend, no config): skip verification entirely. Output: "PR merged. Documentation-only change — no deploy verification needed." Go to Step 9.
 
-3. If SCOPE_DOCS is the only scope that's true (no frontend, no backend, no config): skip verification entirely. Output: "PR merged. Documentation-only change — no deploy verification needed." Go to Step 9.
-
-4. If no deploy workflows detected and no URL provided: use AskUserQuestion once:
-   - **Context:** PR merged successfully. No deploy workflow or production URL detected.
+3. If no deploy status command was configured and no URL is available: use AskUserQuestion once:
+   - **Context:** PR merged successfully. No production URL or deploy status command detected.
    - **RECOMMENDATION:** Choose B if this is a library/CLI tool. Choose A if this is a web app.
    - A) Provide a production URL to verify
    - B) Skip verification — this project doesn't have a web deploy
@@ -648,26 +605,11 @@ Look for workflow names containing "deploy", "release", "production", "staging",
 
 The deploy verification strategy depends on the platform detected in Step 5.
 
-### Strategy A: GitHub Actions workflow
+### Strategy A: Platform CLI (Fly.io, Render, Heroku)
 
-If a deploy workflow was detected, find the run triggered by the merge commit:
+If a deploy status command was configured in CLAUDE.md (e.g., `fly status --app myapp`), use it.
 
-```bash
-gh run list --branch <base> --limit 10 --json databaseId,headSha,status,conclusion,name,workflowName
-```
-
-Match by the merge commit SHA (captured in Step 4). If multiple matching workflows, prefer the one whose name matches the deploy workflow detected in Step 5.
-
-Poll every 30 seconds:
-```bash
-gh run view <run-id> --json status,conclusion
-```
-
-### Strategy B: Platform CLI (Fly.io, Render, Heroku)
-
-If a deploy status command was configured in CLAUDE.md (e.g., `fly status --app myapp`), use it instead of or in addition to GitHub Actions polling.
-
-**Fly.io:** After merge, Fly deploys via GitHub Actions or `fly deploy`. Check with:
+**Fly.io:** After merge, Fly deploys via `fly deploy` or connected git automation. Check with:
 ```bash
 fly status --app {app} 2>/dev/null
 ```
@@ -684,11 +626,11 @@ Render deploys typically take 2-5 minutes. Poll every 30 seconds.
 heroku releases --app {app} -n 1 2>/dev/null
 ```
 
-### Strategy C: Auto-deploy platforms (Vercel, Netlify)
+### Strategy B: Auto-deploy platforms (Vercel, Netlify)
 
 Vercel and Netlify deploy automatically on merge. No explicit deploy trigger needed. Wait 60 seconds for the deploy to propagate, then proceed directly to canary verification in Step 7.
 
-### Strategy D: Custom deploy hooks
+### Strategy C: Custom deploy hooks
 
 If CLAUDE.md has a custom deploy status command in the "Custom deploy hooks" section, run that command and check its exit code.
 
@@ -698,8 +640,8 @@ Record deploy start time. Show progress every 2 minutes: "Deploy in progress... 
 
 If deploy succeeds (`conclusion` is `success` or health check passes): record deploy duration, continue to Step 7.
 
-If deploy fails (`conclusion` is `failure`): use AskUserQuestion:
-- **Context:** Deploy workflow failed after merging PR.
+If deploy verification fails: use AskUserQuestion:
+- **Context:** Deploy verification failed after merging PR.
 - **RECOMMENDATION:** Choose A to investigate before reverting.
 - A) Investigate the deploy logs
 - B) Create a revert commit on the base branch
@@ -808,14 +750,13 @@ Merged:       <timestamp> (<merge method>)
 Merge SHA:    <sha>
 
 Timing:
-  CI wait:    <duration>
+  Merge wait: <duration>
   Queue:      <duration or "direct merge">
-  Deploy:     <duration or "no workflow detected">
+  Deploy:     <duration or "no deploy check">
   Canary:     <duration or "skipped">
   Total:      <end-to-end duration>
 
-CI:           <PASSED / SKIPPED>
-Deploy:       <PASSED / FAILED / NO WORKFLOW>
+Deploy:       <PASSED / FAILED / SKIPPED>
 Verification: <HEALTHY / DEGRADED / SKIPPED / REVERTED>
   Scope:      <FRONTEND / BACKEND / CONFIG / DOCS / MIXED>
   Console:    <N errors or "clean">
@@ -836,7 +777,7 @@ mkdir -p ~/.ostack/projects/$SLUG
 
 Write a JSONL entry with timing data:
 ```json
-{"skill":"land-and-deploy","timestamp":"<ISO>","status":"<SUCCESS/REVERTED>","pr":<number>,"merge_sha":"<sha>","deploy_status":"<HEALTHY/DEGRADED/SKIPPED>","ci_wait_s":<N>,"queue_s":<N>,"deploy_s":<N>,"canary_s":<N>,"total_s":<N>}
+{"skill":"land-and-deploy","timestamp":"<ISO>","status":"<SUCCESS/REVERTED>","pr":<number>,"merge_sha":"<sha>","deploy_status":"<HEALTHY/DEGRADED/SKIPPED>","merge_wait_s":<N>,"queue_s":<N>,"deploy_s":<N>,"canary_s":<N>,"total_s":<N>}
 ```
 
 ---
@@ -854,9 +795,9 @@ After the deploy report, suggest relevant follow-ups:
 ## Important Rules
 
 - **Never force push.** Use `gh pr merge` which is safe.
-- **Never skip CI.** If checks are failing, stop.
+- **Never ignore failing local tests.** If free tests fail, stop.
 - **Auto-detect everything.** PR number, merge method, deploy strategy, project type. Only ask when information genuinely can't be inferred.
-- **Poll with backoff.** Don't hammer GitHub API. 30-second intervals for CI/deploy, with reasonable timeouts.
+- **Poll with backoff.** Don't hammer GitHub API. 15-30 second intervals are enough.
 - **Revert is always an option.** At every failure point, offer revert as an escape hatch.
 - **Single-pass verification, not continuous monitoring.** `/land-and-deploy` checks once. `/canary` does the extended monitoring loop.
 - **Clean up.** Delete the feature branch after merge (via `--delete-branch`).

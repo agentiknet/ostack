@@ -274,8 +274,8 @@ After producing the Completion Summary above, persist the review result.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes review metadata to
 `~/.ostack/` (user config directory, not project files). The skill preamble
-already writes to `~/.ostack/sessions/` and `~/.ostack/analytics/` — this is
-the same pattern. The review dashboard depends on this data. Skipping this
+already writes session state to `~/.ostack/sessions/`; this follows the same
+local-state pattern. The review dashboard depends on this data. Skipping this
 command breaks the review readiness dashboard in /ship.
 
 ```bash

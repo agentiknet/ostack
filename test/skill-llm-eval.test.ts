@@ -693,7 +693,7 @@ describeIfSelected('Deploy skill evals', [
       startMarker: '## Step 1: Pre-flight',
       endMarker: '## Important Rules',
       judgeContext: 'a merge-deploy-verify workflow for landing PRs to production',
-      judgeGoal: 'how to merge a PR via GitHub CLI, wait for CI and deploy workflows (with platform-specific strategies for Fly.io/Render/Vercel/Netlify), run canary health checks on production, and offer revert if something breaks — with timing data logged for retrospectives',
+      judgeGoal: 'how to merge a PR via GitHub CLI, wait for deploy verification (with platform-specific strategies for Fly.io/Render/Vercel/Netlify), run canary health checks on production, and offer revert if something breaks — with timing data logged for retrospectives',
     });
   }, 30_000);
 
@@ -729,7 +729,7 @@ describeIfSelected('Deploy skill evals', [
       startMarker: '### Step 2: Detect platform',
       endMarker: '## Important Rules',
       judgeContext: 'a deployment configuration setup workflow that detects deploy platforms and writes config to CLAUDE.md',
-      judgeGoal: 'how to detect deploy platforms (Fly.io, Render, Vercel, Netlify, Heroku, GitHub Actions, custom), gather platform-specific configuration (URLs, status commands, health checks, custom hooks), and persist everything to CLAUDE.md for future automated use',
+      judgeGoal: 'how to detect deploy platforms (Fly.io, Render, Vercel, Netlify, Heroku, custom), gather platform-specific configuration (URLs, status commands, health checks, custom hooks), and persist everything to CLAUDE.md for future automated use',
     });
   }, 30_000);
 });

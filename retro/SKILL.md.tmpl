@@ -115,9 +115,6 @@ find . -name '*.test.*' -o -name '*.spec.*' -o -name '*_test.*' -o -name '*_spec
 # 11. Regression test commits in window
 git log origin/<default> --since="<window>" --oneline --grep="test(qa):" --grep="test(design):" --grep="test: coverage"
 
-# 12. ostack skill usage telemetry (if available)
-cat ~/.ostack/analytics/skill-usage.jsonl 2>/dev/null || true
-
 # 12. Test files changed in window
 git log origin/<default> --since="<window>" --format="" --name-only | grep -E '\.(test|spec)\.' | sort -u | wc -l
 ```
@@ -136,7 +133,7 @@ Calculate and present these metrics in a summary table:
 | Net LOC added | N |
 | Test LOC (insertions) | N |
 | Test LOC ratio | N% |
-| Version range | vX.Y.Z.W → vX.Y.Z.W |
+| Version range | vX.Y.Z → vX.Y.Z |
 | Active days | N |
 | Detected sessions | N |
 | Avg LOC/session-hour | N |
@@ -169,28 +166,6 @@ Include in the metrics table:
 ```
 
 If TODOS.md doesn't exist, skip the Backlog Health row.
-
-**Skill Usage (if analytics exist):** Read `~/.ostack/analytics/skill-usage.jsonl` if it exists. Filter entries within the retro time window by `ts` field. Separate skill activations (no `event` field) from hook fires (`event: "hook_fire"`). Aggregate by skill name. Present as:
-
-```
-| Skill Usage | /ship(12) /qa(8) /review(5) · 3 safety hook fires |
-```
-
-If the JSONL file doesn't exist or has no entries in the window, skip the Skill Usage row.
-
-**Eureka Moments (if logged):** Read `~/.ostack/analytics/eureka.jsonl` if it exists. Filter entries within the retro time window by `ts` field. For each eureka moment, show the skill that flagged it, the branch, and a one-line summary of the insight. Present as:
-
-```
-| Eureka Moments | 2 this period |
-```
-
-If moments exist, list them:
-```
-  EUREKA /office-hours (branch: garrytan/auth-rethink): "Session tokens don't need server storage — browser crypto API makes client-side JWT validation viable"
-  EUREKA /plan-eng-review (branch: garrytan/cache-layer): "Redis isn't needed here — Bun's built-in LRU cache handles this workload"
-```
-
-If the JSONL file doesn't exist or has no entries in the window, skip the Eureka Moments row.
 
 ### Step 3: Commit Time Distribution
 
@@ -628,7 +603,7 @@ align cleanly. Never truncate project names.
 ║
 ║  [N] commits across [M] projects
 ║  +[X]k LOC added · [Y]k LOC deleted · [Z]k net
-║  [N] AI coding sessions (CC: X, Codex: Y, Gemini: Z)
+║  [N] AI coding sessions (CC: X, Codex: Y)
 ║  [N]-day shipping streak 🔥
 ║
 ║  PROJECTS
@@ -682,7 +657,7 @@ This is the "deep dive" that follows the shareable card.
 | Projects active | N |
 | Total commits (all repos, all contributors) | N |
 | Total LOC | +N / -N |
-| AI coding sessions | N (CC: X, Codex: Y, Gemini: Z) |
+| AI coding sessions | N (CC: X, Codex: Y) |
 | Active days | N |
 | Global shipping streak (any contributor, any repo) | N consecutive days |
 | Context switches/day | N avg (max: M) |
@@ -726,7 +701,6 @@ Format:
 Per-tool breakdown with behavioral patterns:
 - Claude Code: N sessions across M repos — patterns observed
 - Codex: N sessions across M repos — patterns observed
-- Gemini: N sessions across M repos — patterns observed
 
 ### Ship of the Week (Global)
 Highest-impact PR across ALL projects. Identify by LOC and commit messages.
@@ -778,7 +752,7 @@ Use the Write tool to save JSON to `~/.ostack/retros/global-${today}-${next}.jso
       "commits": 47,
       "insertions": 3200,
       "deletions": 800,
-      "sessions": { "claude_code": 15, "codex": 3, "gemini": 0 }
+      "sessions": { "claude_code": 15, "codex": 3 }
     }
   ],
   "totals": {
@@ -787,11 +761,11 @@ Use the Write tool to save JSON to `~/.ostack/retros/global-${today}-${next}.jso
     "deletions": 4200,
     "projects": 5,
     "active_days": 6,
-    "sessions": { "claude_code": 48, "codex": 8, "gemini": 3 },
+    "sessions": { "claude_code": 48, "codex": 8 },
     "global_streak_days": 52,
     "avg_context_switches_per_day": 2.1
   },
-  "tweetable": "Week of Mar 14: 5 projects, 182 commits, 15.3k LOC | CC: 48, Codex: 8, Gemini: 3 | Focus: ostack (58%) | Streak: 52d"
+  "tweetable": "Week of Mar 14: 5 projects, 182 commits, 15.3k LOC | CC: 48, Codex: 8 | Focus: ostack (58%) | Streak: 52d"
 }
 ```
 

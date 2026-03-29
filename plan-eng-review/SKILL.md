@@ -106,14 +106,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -179,34 +175,6 @@ ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
 
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
-
 ## Plan Status Footer
 
 When you are in plan mode and about to call ExitPlanMode:
@@ -270,7 +238,7 @@ These are not additional checklist items. They are the instincts that experience
 6. **Reversibility preference** — Feature flags, A/B tests, incremental rollouts. Make the cost of being wrong low.
 7. **Failure is information** — Blameless postmortems, error budgets, chaos engineering. Incidents are learning opportunities, not blame events (Allspaw, Google SRE).
 8. **Org structure IS architecture** — Conway's Law in practice. Design both intentionally (Skelton/Pais, Team Topologies).
-9. **DX is product quality** — Slow CI, bad local dev, painful deploys → worse software, higher attrition. Developer experience is a leading indicator.
+9. **DX is product quality** — Slow feedback loops, bad local dev, painful deploys → worse software, higher attrition. Developer experience is a leading indicator.
 10. **Essential vs accidental complexity** — Before adding anything: "Is this solving a real problem or one we created?" (Brooks, No Silver Bullet).
 11. **Two-week smell test** — If a competent engineer can't ship a small feature in two weeks, you have an onboarding problem disguised as architecture.
 12. **Glue work awareness** — Recognize invisible coordination work. Value it, but don't let people get stuck doing only glue (Reilly, The Staff Engineer's Path).
@@ -331,7 +299,6 @@ Follow it inline, **skipping these sections** (already handled by the parent ski
 - Search Before Building
 - Contributor Mode
 - Completion Status Protocol
-- Telemetry (run last)
 
 If the Read fails (file not found), say:
 "Could not load /office-hours — proceeding with standard review."
@@ -800,8 +767,8 @@ After producing the Completion Summary above, persist the review result.
 
 **PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes review metadata to
 `~/.ostack/` (user config directory, not project files). The skill preamble
-already writes to `~/.ostack/sessions/` and `~/.ostack/analytics/` — this is
-the same pattern. The review dashboard depends on this data. Skipping this
+already writes session state to `~/.ostack/sessions/`; this follows the same
+local-state pattern. The review dashboard depends on this data. Skipping this
 command breaks the review readiness dashboard in /ship.
 
 ```bash

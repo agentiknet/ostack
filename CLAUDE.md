@@ -35,11 +35,12 @@ variants to force all tests. Run `eval:select` to preview which tests would run.
 ## Testing
 
 ```bash
-bun test             # run before every commit — free, <2s
-bun run test:evals   # run before shipping — paid, diff-based (~$4/run max)
+bun run test:fast    # quick local checks before every commit
+bun test             # full free suite before shipping
+bun run test:evals   # paid, diff-based (~$4/run max)
 ```
 
-`bun test` runs skill validation, gen-skill-docs quality checks, and browse
+`bun run test:fast` runs the fastest validation subset. `bun test` runs skill validation, gen-skill-docs quality checks, and browse
 integration tests. `bun run test:evals` runs LLM-judge quality evals and E2E
 tests via `claude -p`. Both must pass before creating a PR.
 

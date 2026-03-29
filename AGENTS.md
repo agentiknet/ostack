@@ -15,8 +15,8 @@ Skills live in `.agents/skills/`. Invoke them by name (e.g., `/office-hours`).
 | `/plan-eng-review` | Lock architecture, data flow, edge cases, and tests. |
 | `/plan-design-review` | Rate each design dimension 0-10, explain what a 10 looks like. |
 | `/design-consultation` | Build a complete design system from scratch. |
-| `/review` | Pre-landing PR review. Finds bugs that pass CI but break in prod. |
-| `/debug` | Systematic root-cause debugging. No fixes without investigation. |
+| `/review` | Pre-landing PR review. Finds bugs that pass tests but break in prod. |
+| `/investigate` | Systematic root-cause debugging. No fixes without investigation. |
 | `/design-review` | Design audit + fix loop with atomic commits. |
 | `/qa` | Open a real browser, find bugs, fix them, re-verify. |
 | `/qa-only` | Same as /qa but report only — no code changes. |
@@ -35,7 +35,8 @@ Skills live in `.agents/skills/`. Invoke them by name (e.g., `/office-hours`).
 
 ```bash
 bun install              # install dependencies
-bun test                 # run tests (free, <5s)
+bun run test:fast        # quick local checks
+bun test                 # full free test suite
 bun run build            # generate docs + compile binaries
 bun run gen:skill-docs   # regenerate SKILL.md files from templates
 bun run skill:check      # health dashboard for all skills

@@ -102,14 +102,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -174,34 +170,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -337,9 +305,6 @@ find . -name '*.test.*' -o -name '*.spec.*' -o -name '*_test.*' -o -name '*_spec
 # 11. Regression test commits in window
 git log origin/<default> --since="<window>" --oneline --grep="test(qa):" --grep="test(design):" --grep="test: coverage"
 
-# 12. ostack skill usage telemetry (if available)
-cat ~/.ostack/analytics/skill-usage.jsonl 2>/dev/null || true
-
 # 12. Test files changed in window
 git log origin/<default> --since="<window>" --format="" --name-only | grep -E '\.(test|spec)\.' | sort -u | wc -l
 ```
@@ -358,7 +323,7 @@ Calculate and present these metrics in a summary table:
 | Net LOC added | N |
 | Test LOC (insertions) | N |
 | Test LOC ratio | N% |
-| Version range | vX.Y.Z.W → vX.Y.Z.W |
+| Version range | vX.Y.Z → vX.Y.Z |
 | Active days | N |
 | Detected sessions | N |
 | Avg LOC/session-hour | N |
@@ -391,28 +356,6 @@ Include in the metrics table:
 ```
 
 If TODOS.md doesn't exist, skip the Backlog Health row.
-
-**Skill Usage (if analytics exist):** Read `~/.ostack/analytics/skill-usage.jsonl` if it exists. Filter entries within the retro time window by `ts` field. Separate skill activations (no `event` field) from hook fires (`event: "hook_fire"`). Aggregate by skill name. Present as:
-
-```
-| Skill Usage | /ship(12) /qa(8) /review(5) · 3 safety hook fires |
-```
-
-If the JSONL file doesn't exist or has no entries in the window, skip the Skill Usage row.
-
-**Eureka Moments (if logged):** Read `~/.ostack/analytics/eureka.jsonl` if it exists. Filter entries within the retro time window by `ts` field. For each eureka moment, show the skill that flagged it, the branch, and a one-line summary of the insight. Present as:
-
-```
-| Eureka Moments | 2 this period |
-```
-
-If moments exist, list them:
-```
-  EUREKA /office-hours (branch: garrytan/auth-rethink): "Session tokens don't need server storage — browser crypto API makes client-side JWT validation viable"
-  EUREKA /plan-eng-review (branch: garrytan/cache-layer): "Redis isn't needed here — Bun's built-in LRU cache handles this workload"
-```
-
-If the JSONL file doesn't exist or has no entries in the window, skip the Eureka Moments row.
 
 ### Step 3: Commit Time Distribution
 
@@ -850,7 +793,7 @@ align cleanly. Never truncate project names.
 ║
 ║  [N] commits across [M] projects
 ║  +[X]k LOC added · [Y]k LOC deleted · [Z]k net
-║  [N] AI coding sessions (CC: X, Codex: Y, Gemini: Z)
+║  [N] AI coding sessions (CC: X, Codex: Y)
 ║  [N]-day shipping streak 🔥
 ║
 ║  PROJECTS
@@ -904,7 +847,7 @@ This is the "deep dive" that follows the shareable card.
 | Projects active | N |
 | Total commits (all repos, all contributors) | N |
 | Total LOC | +N / -N |
-| AI coding sessions | N (CC: X, Codex: Y, Gemini: Z) |
+| AI coding sessions | N (CC: X, Codex: Y) |
 | Active days | N |
 | Global shipping streak (any contributor, any repo) | N consecutive days |
 | Context switches/day | N avg (max: M) |
@@ -948,7 +891,6 @@ Format:
 Per-tool breakdown with behavioral patterns:
 - Claude Code: N sessions across M repos — patterns observed
 - Codex: N sessions across M repos — patterns observed
-- Gemini: N sessions across M repos — patterns observed
 
 ### Ship of the Week (Global)
 Highest-impact PR across ALL projects. Identify by LOC and commit messages.
@@ -1000,7 +942,7 @@ Use the Write tool to save JSON to `~/.ostack/retros/global-${today}-${next}.jso
       "commits": 47,
       "insertions": 3200,
       "deletions": 800,
-      "sessions": { "claude_code": 15, "codex": 3, "gemini": 0 }
+      "sessions": { "claude_code": 15, "codex": 3 }
     }
   ],
   "totals": {
@@ -1009,11 +951,11 @@ Use the Write tool to save JSON to `~/.ostack/retros/global-${today}-${next}.jso
     "deletions": 4200,
     "projects": 5,
     "active_days": 6,
-    "sessions": { "claude_code": 48, "codex": 8, "gemini": 3 },
+    "sessions": { "claude_code": 48, "codex": 8 },
     "global_streak_days": 52,
     "avg_context_switches_per_day": 2.1
   },
-  "tweetable": "Week of Mar 14: 5 projects, 182 commits, 15.3k LOC | CC: 48, Codex: 8, Gemini: 3 | Focus: ostack (58%) | Streak: 52d"
+  "tweetable": "Week of Mar 14: 5 projects, 182 commits, 15.3k LOC | CC: 48, Codex: 8 | Focus: ostack (58%) | Streak: 52d"
 }
 ```
 

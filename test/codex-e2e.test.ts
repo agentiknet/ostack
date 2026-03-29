@@ -42,7 +42,7 @@ const SKIP = !CODEX_AVAILABLE || !evalsEnabled;
 
 const describeCodex = SKIP ? describe.skip : describe;
 
-// Log why we're skipping (helpful for debugging CI)
+// Log why we're skipping (helpful for debugging automated runs)
 if (!evalsEnabled) {
   // Silent — same as Claude E2E tests, EVALS=1 required
 } else if (!CODEX_AVAILABLE) {

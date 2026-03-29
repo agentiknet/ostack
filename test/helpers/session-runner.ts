@@ -218,7 +218,7 @@ export async function runSkillTest(options: {
                 liveToolCount++;
                 const now = Date.now();
                 const elapsed = Math.round((now - startTime) / 1000);
-                // Track timing telemetry
+                // Track timing metrics
                 if (firstResponseMs === 0) firstResponseMs = now - startTime;
                 if (lastToolTime > 0) {
                   const interTurn = now - lastToolTime;

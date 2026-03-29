@@ -36,7 +36,7 @@ You are running the `/ship` workflow. This is a **non-interactive, fully automat
 
 **Never stop for:**
 - Uncommitted changes (always include them)
-- Version bump choice (auto-pick MICRO or PATCH — see Step 4)
+- Version bump choice (auto-pick PATCH unless the change is clearly larger — see Step 4)
 - CHANGELOG content (auto-generate from diff)
 - Commit message approval (auto-commit)
 - Multi-file changesets (auto-split into bisectable commits)
@@ -280,18 +280,17 @@ For each classified comment:
 
 ## Step 4: Version bump (auto-decide)
 
-1. Read the current `VERSION` file (4-digit format: `MAJOR.MINOR.PATCH.MICRO`)
+1. Read the current `VERSION` file (3-part semver: `MAJOR.MINOR.PATCH`)
 
 2. **Auto-decide the bump level based on the diff:**
    - Count lines changed (`git diff origin/<base>...HEAD --stat | tail -1`)
-   - **MICRO** (4th digit): < 50 lines changed, trivial tweaks, typos, config
-   - **PATCH** (3rd digit): 50+ lines changed, bug fixes, small-medium features
+   - **PATCH** (3rd digit): default for fixes, polish, docs, config, and small-medium features
    - **MINOR** (2nd digit): **ASK the user** — only for major features or significant architectural changes
-   - **MAJOR** (1st digit): **ASK the user** — only for milestones or breaking changes
+   - **MAJOR** (1st digit): **ASK the user** — only for breaking changes or milestones
 
 3. Compute the new version:
    - Bumping a digit resets all digits to its right to 0
-   - Example: `0.19.1.0` + PATCH → `0.19.2.0`
+   - Example: `0.19.1` + PATCH → `0.19.2`
 
 4. Write the new version to the `VERSION` file.
 
@@ -313,7 +312,7 @@ For each classified comment:
      - `### Removed` — removed features
    - Write concise, descriptive bullet points
    - Insert after the file header (line 5), dated today
-   - Format: `## [X.Y.Z.W] - YYYY-MM-DD`
+   - Format: `## [X.Y.Z] - YYYY-MM-DD`
 
 **Do NOT ask the user to describe changes.** Infer from the diff and commit history.
 
@@ -403,7 +402,7 @@ Save this summary — it goes into the PR body in Step 8.
 
 ```bash
 git commit -m "$(cat <<'EOF'
-chore: bump version and changelog (vX.Y.Z.W)
+chore: bump version and changelog (vX.Y.Z)
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 EOF
@@ -530,7 +529,7 @@ doc updates — the user runs `/ship` and documentation stays current without a 
 - **Never skip the pre-landing review.** If checklist.md is unreadable, stop.
 - **Never force push.** Use regular `git push` only.
 - **Never ask for trivial confirmations** (e.g., "ready to push?", "create PR?"). DO stop for: version bumps (MINOR/MAJOR), pre-landing review findings (ASK items), and Codex structured review [P1] findings (large diffs only).
-- **Always use the 4-digit version format** from the VERSION file.
+- **Always use the 3-part version format** from the VERSION file.
 - **Date format in CHANGELOG:** `YYYY-MM-DD`
 - **Split commits for bisectability** — each commit = one logical change.
 - **TODOS.md completion detection must be conservative.** Only mark items as completed when the diff clearly shows the work is done.

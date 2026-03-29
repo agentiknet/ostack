@@ -150,7 +150,6 @@ describe("ostack-global-discover", () => {
         expect(repo.paths.length).toBeGreaterThan(0);
         expect(repo.sessions).toHaveProperty("claude_code");
         expect(repo.sessions).toHaveProperty("codex");
-        expect(repo.sessions).toHaveProperty("gemini");
       }
     });
 
@@ -165,8 +164,7 @@ describe("ostack-global-discover", () => {
       // Total sessions should equal sum across tools
       const toolTotal =
         json.tools.claude_code.total_sessions +
-        json.tools.codex.total_sessions +
-        json.tools.gemini.total_sessions;
+        json.tools.codex.total_sessions;
       expect(json.total_sessions).toBe(toolTotal);
     });
 

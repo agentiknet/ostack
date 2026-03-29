@@ -648,8 +648,8 @@ describe('SPEC_REVIEW_LOOP resolver', () => {
     expect(content).toContain('quality score');
   });
 
-  test('includes metrics path', () => {
-    expect(content).toContain('spec-review.jsonl');
+  test('does not include metrics path', () => {
+    expect(content).not.toContain('spec-review.jsonl');
   });
 
   test('includes convergence guard', () => {
@@ -1103,7 +1103,7 @@ describe('Codex generation (--host codex)', () => {
       // No skill should reference Claude paths
       expect(content).not.toContain('~/.claude/skills');
       expect(content).not.toContain('.claude/skills');
-      if (content.includes('ostack-config') || content.includes('ostack-update-check') || content.includes('ostack-telemetry-log')) {
+      if (content.includes('ostack-config') || content.includes('ostack-update-check')) {
         expect(content).toContain('$OSTACK_ROOT');
       }
       // If a skill references checklist.md, it must use the correct sidecar path
@@ -1231,15 +1231,14 @@ describe('setup script validation', () => {
     expect(fnBody).toContain('ln -snf "ostack/$skill_name"');
   });
 
-  test('setup supports --host auto|claude|codex|kiro', () => {
+  test('setup supports --host auto|claude|codex', () => {
     expect(setupContent).toContain('--host');
-    expect(setupContent).toContain('claude|codex|kiro|auto');
+    expect(setupContent).toContain('claude|codex|auto');
   });
 
-  test('auto mode detects claude, codex, and kiro binaries', () => {
+  test('auto mode detects claude and codex binaries', () => {
     expect(setupContent).toContain('command -v claude');
     expect(setupContent).toContain('command -v codex');
-    expect(setupContent).toContain('command -v kiro-cli');
   });
 
   // T1: Sidecar skip guard — prevents .agents/skills/ostack from being linked as a skill
@@ -1257,14 +1256,6 @@ describe('setup script validation', () => {
     const content = fs.readFileSync(path.join(codexSkillDir, 'SKILL.md'), 'utf-8');
     expect(content).toContain('OSTACK_ROOT=');
     expect(content).toContain('$OSTACK_BIN/');
-  });
-
-  // T3: Kiro host support in setup script
-  test('setup supports --host kiro with install section and sed rewrites', () => {
-    expect(setupContent).toContain('INSTALL_KIRO=');
-    expect(setupContent).toContain('kiro-cli');
-    expect(setupContent).toContain('KIRO_SKILLS=');
-    expect(setupContent).toContain('~/.kiro/skills/ostack');
   });
 
   test('create_agents_sidecar links runtime assets', () => {
@@ -1302,9 +1293,10 @@ describe('setup script validation', () => {
 });
 
 describe('telemetry removed', () => {
-  test('generated SKILL.md does not contain telemetry prompts', () => {
+  test('generated SKILL.md does not contain telemetry prompts or markers', () => {
     const content = fs.readFileSync(path.join(ROOT, 'SKILL.md'), 'utf-8');
     expect(content).not.toContain('Help ostack get better');
     expect(content).not.toContain('.telemetry-prompted');
+    expect(content).not.toContain('~/.ostack/analytics/');
   });
 });

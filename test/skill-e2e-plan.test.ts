@@ -370,7 +370,7 @@ export function main() { return Dashboard(); }
 
     const result = await runSkillTest({
       prompt: `Read plan-eng-review/SKILL.md for the review workflow.
-Skip the preamble bash block, lake intro, telemetry, and contributor mode sections — go straight to the review.
+Skip the preamble bash block, lake intro, and contributor mode sections — go straight to the review.
 
 Read plan.md — that's the plan to review. This is a standalone plan with source code in app.ts and dashboard.ts.
 

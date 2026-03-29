@@ -9,7 +9,7 @@ Detailed guides for every ostack skill — philosophy, workflow, and examples.
 | [`/plan-eng-review`](#plan-eng-review) | **Eng Manager** | Lock in architecture, data flow, diagrams, edge cases, and tests. Forces hidden assumptions into the open. |
 | [`/plan-design-review`](#plan-design-review) | **Senior Designer** | Interactive plan-mode design review. Rates each dimension 0-10, explains what a 10 looks like, fixes the plan. Works in plan mode. |
 | [`/design-consultation`](#design-consultation) | **Design Partner** | Build a complete design system from scratch. Knows the landscape, proposes creative risks, generates realistic product mockups. Design at the heart of all other phases. |
-| [`/review`](#review) | **Staff Engineer** | Find the bugs that pass CI but blow up in production. Auto-fixes the obvious ones. Flags completeness gaps. |
+| [`/review`](#review) | **Staff Engineer** | Find the bugs that pass tests but blow up in production. Auto-fixes the obvious ones. Flags completeness gaps. |
 | [`/investigate`](#investigate) | **Debugger** | Systematic root-cause debugging. Iron Law: no fixes without investigation. Traces data flow, tests hypotheses, stops after 3 failed fixes. |
 | [`/design-review`](#design-review) | **Designer Who Codes** | Live-site visual audit + fix loop. 80-item audit, then fixes what it finds. Atomic commits, before/after screenshots. |
 | [`/qa`](#qa) | **QA Lead** | Test your app, find bugs, fix them with atomic commits, re-verify. Auto-generates regression tests for every fix. |
@@ -405,7 +405,7 @@ This is my **paranoid staff engineer mode**.
 
 Passing tests do not mean the branch is safe.
 
-`/review` exists because there is a whole class of bugs that can survive CI and still punch you in the face in production. This mode is not about dreaming bigger. It is not about making the plan prettier. It is about asking:
+`/review` exists because there is a whole class of bugs that can survive tests and still punch you in the face in production. This mode is not about dreaming bigger. It is not about making the plan prettier. It is about asking:
 
 **What can still break?**
 
@@ -511,7 +511,7 @@ This is where the model should stop behaving like a brainstorm partner and start
 
 ### Test bootstrap
 
-If your project doesn't have a test framework, `/ship` sets one up — detects your runtime, researches the best framework, installs it, writes 3-5 real tests for your actual code, sets up CI/CD (GitHub Actions), and creates TESTING.md. 100% test coverage is the goal — tests make vibe coding safe instead of yolo coding.
+If your project doesn't have a test framework, `/ship` sets one up — detects your runtime, researches the best framework, installs it, writes 3-5 real tests for your actual code, and creates TESTING.md. 100% test coverage is the goal — tests make vibe coding safe instead of yolo coding.
 
 ### Coverage audit
 
@@ -820,7 +820,7 @@ Set `auto_upgrade: true` in `~/.ostack/config.yaml` to skip the prompt entirely 
 
 ## Greptile integration
 
-[Greptile](https://greptile.com) is a YC company that reviews your PRs automatically. It catches real bugs — race conditions, security issues, things that pass CI and blow up in production. It has genuinely saved my ass more than once. I love these guys.
+[Greptile](https://greptile.com) is a YC company that reviews your PRs automatically. It catches real bugs — race conditions, security issues, things that pass tests and blow up in production. It has genuinely saved my ass more than once. I love these guys.
 
 ### Setup
 

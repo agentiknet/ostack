@@ -1787,7 +1787,7 @@ describeIfSelected('Document-Release skill E2E', ['document-release'], () => {
 
     // Create initial CHANGELOG that must NOT be clobbered
     fs.writeFileSync(path.join(docReleaseDir, 'CHANGELOG.md'),
-      '# Changelog\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Setup CI pipeline\n');
+      '# Changelog\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Added local test coverage\n');
 
     // Create VERSION file (already bumped)
     fs.writeFileSync(path.join(docReleaseDir, 'VERSION'), '1.1.0\n');
@@ -1800,7 +1800,7 @@ describeIfSelected('Document-Release skill E2E', ['document-release'], () => {
     fs.writeFileSync(path.join(docReleaseDir, 'feature-c.ts'), 'export function featureC() { return "C"; }\n');
     fs.writeFileSync(path.join(docReleaseDir, 'VERSION'), '1.1.1\n');
     fs.writeFileSync(path.join(docReleaseDir, 'CHANGELOG.md'),
-      '# Changelog\n\n## 1.1.1 — 2026-03-16\n\n- Added Feature C\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Setup CI pipeline\n');
+      '# Changelog\n\n## 1.1.1 — 2026-03-16\n\n- Added Feature C\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Added local test coverage\n');
     run('git', ['add', '.']);
     run('git', ['commit', '-m', 'feat: add feature C']);
   });
@@ -1836,7 +1836,7 @@ IMPORTANT:
     // Read CHANGELOG to verify it was NOT clobbered
     const changelog = fs.readFileSync(path.join(docReleaseDir, 'CHANGELOG.md'), 'utf-8');
     const hasOriginalEntries = changelog.includes('Initial release with Feature A and Feature B')
-      && changelog.includes('Setup CI pipeline')
+      && changelog.includes('Added local test coverage')
       && changelog.includes('1.0.0');
     if (!hasOriginalEntries) {
       console.warn('CHANGELOG CLOBBERED — original entries missing!');

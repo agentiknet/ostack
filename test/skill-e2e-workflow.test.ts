@@ -38,7 +38,7 @@ describeIfSelected('Document-Release skill E2E', ['document-release'], () => {
 
     // Create initial CHANGELOG that must NOT be clobbered
     fs.writeFileSync(path.join(docReleaseDir, 'CHANGELOG.md'),
-      '# Changelog\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Setup CI pipeline\n');
+      '# Changelog\n\n## 1.0.0 - 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Added local test coverage\n');
 
     // Create VERSION file (already bumped)
     fs.writeFileSync(path.join(docReleaseDir, 'VERSION'), '1.1.0\n');
@@ -51,7 +51,7 @@ describeIfSelected('Document-Release skill E2E', ['document-release'], () => {
     fs.writeFileSync(path.join(docReleaseDir, 'feature-c.ts'), 'export function featureC() { return "C"; }\n');
     fs.writeFileSync(path.join(docReleaseDir, 'VERSION'), '1.1.1\n');
     fs.writeFileSync(path.join(docReleaseDir, 'CHANGELOG.md'),
-      '# Changelog\n\n## 1.1.1 — 2026-03-16\n\n- Added Feature C\n\n## 1.0.0 — 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Setup CI pipeline\n');
+      '# Changelog\n\n## 1.1.1 - 2026-03-16\n\n- Added Feature C\n\n## 1.0.0 - 2026-03-01\n\n- Initial release with Feature A and Feature B\n- Added local test coverage\n');
     run('git', ['add', '.']);
     run('git', ['commit', '-m', 'feat: add feature C']);
   });
@@ -87,7 +87,7 @@ IMPORTANT:
     // Read CHANGELOG to verify it was NOT clobbered
     const changelog = fs.readFileSync(path.join(docReleaseDir, 'CHANGELOG.md'), 'utf-8');
     const hasOriginalEntries = changelog.includes('Initial release with Feature A and Feature B')
-      && changelog.includes('Setup CI pipeline')
+      && changelog.includes('Added local test coverage')
       && changelog.includes('1.0.0');
     if (!hasOriginalEntries) {
       console.warn('CHANGELOG CLOBBERED — original entries missing!');
@@ -140,7 +140,7 @@ describeIfSelected('Ship workflow E2E', ['ship-local-workflow'], () => {
 
     // Initial commit on main
     fs.writeFileSync(path.join(shipWorkDir, 'app.ts'), 'console.log("v1");\n');
-    fs.writeFileSync(path.join(shipWorkDir, 'VERSION'), '0.1.0.0\n');
+    fs.writeFileSync(path.join(shipWorkDir, 'VERSION'), '0.1.0\n');
     fs.writeFileSync(path.join(shipWorkDir, 'CHANGELOG.md'), '# Changelog\n');
     run('git', ['add', '.']);
     run('git', ['commit', '-m', 'initial']);
@@ -173,17 +173,17 @@ git fetch origin <base> && git merge origin/<base> --no-edit
 If already up to date, continue silently.
 
 Step 4 — Version bump:
-Read the VERSION file (4-digit format: MAJOR.MINOR.PATCH.MICRO).
-Auto-pick MICRO bump (increment the 4th digit). Write the new version to VERSION.
+Read the VERSION file (3-part semver: MAJOR.MINOR.PATCH).
+Auto-pick PATCH bump (increment the 3rd digit). Write the new version to VERSION.
 
 Step 5 — CHANGELOG:
 Read CHANGELOG.md. Auto-generate an entry from the branch commits:
 - git log <base>..HEAD --oneline
 - git diff <base>...HEAD
-Format: ## [X.Y.Z.W] - YYYY-MM-DD with bullet points. Prepend after the header.
+Format: ## [X.Y.Z] - YYYY-MM-DD with bullet points. Prepend after the header.
 
 Step 6 — Commit:
-Stage all changes. Commit with message: "chore: bump version and changelog (vX.Y.Z.W)"
+Stage all changes. Commit with message: "chore: bump version and changelog (vX.Y.Z)"
 
 Step 7 — Push:
 git push -u origin <branch-name>
@@ -205,7 +205,7 @@ Finally, write ship-summary.md with the version and branch.`,
     // Check VERSION was bumped
     const versionContent = fs.existsSync(path.join(shipWorkDir, 'VERSION'))
       ? fs.readFileSync(path.join(shipWorkDir, 'VERSION'), 'utf-8').trim() : '';
-    const versionBumped = versionContent !== '0.1.0.0';
+    const versionBumped = versionContent !== '0.1.0';
 
     recordE2E(evalCollector, '/ship local workflow', 'Ship workflow E2E', result, {
       passed: remoteCommits > 1 && ['success', 'error_max_turns'].includes(result.exitReason),
@@ -408,7 +408,7 @@ describeIfSelected('Test Coverage Audit E2E', ['ship-coverage-audit'], () => {
     fs.writeFileSync(path.join(coverageDir, 'vitest.config.ts'),
       `import { defineConfig } from 'vitest/config';\nexport default defineConfig({ test: {} });\n`);
 
-    fs.writeFileSync(path.join(coverageDir, 'VERSION'), '0.1.0.0\n');
+    fs.writeFileSync(path.join(coverageDir, 'VERSION'), '0.1.0\n');
     fs.writeFileSync(path.join(coverageDir, 'CHANGELOG.md'), '# Changelog\n');
 
     // Create source file with multiple code paths

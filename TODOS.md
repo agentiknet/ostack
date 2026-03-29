@@ -241,15 +241,6 @@
 **Effort:** S
 **Priority:** P2
 
-### CI/CD QA integration
-
-**What:** `/qa` as GitHub Action step, fail PR if health score drops.
-
-**Why:** Automated quality gate in CI. Catch regressions before merge.
-
-**Effort:** M
-**Priority:** P2
-
 ### Smart default QA tier
 
 **What:** After a few runs, check index.md for user's usual tier pick, skip the AskUserQuestion.
@@ -268,16 +259,6 @@
 **Effort:** S
 **Priority:** P3
 
-### CI/CD generation for non-GitHub providers
-
-**What:** Extend CI/CD bootstrap to generate GitLab CI (`.gitlab-ci.yml`), CircleCI (`.circleci/config.yml`), and Bitrise pipelines.
-
-**Why:** Not all projects use GitHub Actions. Universal CI/CD bootstrap would make test bootstrap work for everyone.
-
-**Context:** v1 ships with GitHub Actions only. Detection logic already checks for `.gitlab-ci.yml`, `.circleci/`, `bitrise.yml` and skips with an informational note. Each provider needs ~20 lines of template text in `generateTestBootstrap()`.
-
-**Effort:** M
-**Priority:** P3
 **Depends on:** Test bootstrap (shipped)
 
 ### Auto-upgrade weak tests (★) to strong tests (★★★)
@@ -338,23 +319,11 @@
 **Depends on:** Video recording
 
 
-### GitHub Actions eval upload
-
-**What:** Run eval suite in CI, upload result JSON as artifact, post summary comment on PR.
-
-**Why:** CI integration catches quality regressions before merge and provides persistent eval records per PR.
-
-**Context:** Requires `ANTHROPIC_API_KEY` in CI secrets. Cost is ~$4/run. Eval persistence system (v0.3.6) writes JSON to `~/.ostack-dev/evals/` — CI would upload as GitHub Actions artifacts and use `eval:compare` to post delta comment.
-
-**Effort:** M
-**Priority:** P2
-**Depends on:** Eval persistence (shipped in v0.3.6)
-
 ### E2E model pinning — SHIPPED
 
 ~~**What:** Pin E2E tests to claude-sonnet-4-6 for cost efficiency, add retry:2 for flaky LLM responses.~~
 
-Shipped: Default model changed to Sonnet for structure tests (~30), Opus retained for quality tests (~10). `--retry 2` added. `EVALS_MODEL` env var for override. `test:e2e:fast` tier added. Rate-limit telemetry (first_response_ms, max_inter_turn_ms) and wall_clock_ms tracking added to eval-store.
+Shipped: Default model changed to Sonnet for structure tests (~30), Opus retained for quality tests (~10). `--retry 2` added. `EVALS_MODEL` env var for override. `test:e2e:fast` tier added. Timing metrics (first_response_ms, max_inter_turn_ms, wall_clock_ms) added to eval-store.
 
 ### Eval web dashboard
 
@@ -368,16 +337,6 @@ Shipped: Default model changed to Sonnet for structure tests (~30), Opus retaine
 **Priority:** P3
 **Depends on:** Eval persistence (shipped in v0.3.6)
 
-### CI/CD QA quality gate
-
-**What:** Run `/qa` as a GitHub Action step, fail PR if health score drops below threshold.
-
-**Why:** Automated quality gate catches regressions before merge. Currently QA is manual — CI integration makes it part of the standard workflow.
-
-**Context:** Requires headless browse binary available in CI. The `/qa` skill already produces `baseline.json` with health scores — CI step would compare against the main branch baseline and fail if score drops. Would need `ANTHROPIC_API_KEY` in CI secrets since `/qa` uses Claude.
-
-**Effort:** M
-**Priority:** P2
 **Depends on:** None
 
 ### Cross-platform URL open helper
@@ -509,46 +468,20 @@ Shipped in v0.8.3. Step 8.5 added to `/ship` — after creating the PR, `/ship` 
 
 ~~**What:** Three new skills that use Claude Code's session-scoped PreToolUse hooks to add safety guardrails on demand.~~
 
-Shipped as `/careful`, `/freeze`, `/guard`, and `/unfreeze` in v0.6.5. Includes hook fire-rate telemetry (pattern name only, no command content) and inline skill activation telemetry.
-
-### Skill usage telemetry — SHIPPED
-
-~~**What:** Track which skills get invoked, how often, from which repo.~~
-
-Shipped in v0.6.5. TemplateContext in gen-skill-docs.ts bakes skill name into preamble telemetry line. Analytics CLI (`bun run analytics`) for querying. /retro integration shows skills-used-this-week.
-
-### /investigate scoped debugging enhancements (gated on telemetry)
-
-**What:** Six enhancements to /investigate auto-freeze, contingent on telemetry showing the freeze hook actually fires in real debugging sessions.
-
-**Why:** /investigate v0.7.1 auto-freezes edits to the module being debugged. If telemetry shows the hook fires often, these enhancements make the experience smarter. If it never fires, the problem wasn't real and these aren't worth building.
-
-**Context:** All items are prose additions to `investigate/SKILL.md.tmpl`. No new scripts.
-
-**Items:**
-1. Stack trace auto-detection for freeze directory (parse deepest app frame)
-2. Freeze boundary widening (ask to widen instead of hard-block when hitting boundary)
-3. Post-fix auto-unfreeze + full test suite run
-4. Debug instrumentation cleanup (tag with DEBUG-TEMP, remove before commit)
-5. Debug session persistence (~/.ostack/investigate-sessions/ — save investigation for reuse)
-6. Investigation timeline in debug report (hypothesis log with timing)
-
-**Effort:** M (all 6 combined)
-**Priority:** P3
-**Depends on:** Telemetry data showing freeze hook fires in real /investigate sessions
+Shipped as `/careful`, `/freeze`, `/guard`, and `/unfreeze` in v0.6.5.
 
 ## Completed
 
-### Deploy pipeline (v0.9.8.0)
-- /land-and-deploy — merge PR, wait for CI/deploy, canary verification
+### Deploy pipeline (v0.9.8)
+- /land-and-deploy — merge PR, verify deploy, canary verification
 - /canary — post-deploy monitoring loop with anomaly detection
 - /benchmark — performance regression detection with Core Web Vitals
 - /setup-deploy — one-time deploy platform configuration
 - /review Performance & Bundle Impact pass
 - E2E model pinning (Sonnet default, Opus for quality tests)
-- E2E timing telemetry (first_response_ms, max_inter_turn_ms, wall_clock_ms)
+- E2E timing metrics (first_response_ms, max_inter_turn_ms, wall_clock_ms)
 - test:e2e:fast tier, --retry 2 on all E2E scripts
-**Completed:** v0.9.8.0
+**Completed:** v0.9.8
 
 ### Phase 1: Foundations (v0.2.0)
 - Rename to ostack

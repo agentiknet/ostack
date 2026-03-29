@@ -120,13 +120,15 @@ Bun auto-loads `.env` — no extra config. Conductor workspaces inherit `.env` f
 
 | Tier | Command | Cost | What it tests |
 |------|---------|------|---------------|
+| 0 — Fast | `bun run test:fast` | Free | Highest-signal static checks for quick iteration |
 | 1 — Static | `bun test` | Free | Command validation, snapshot flags, SKILL.md correctness, TODOS-format.md refs, observability unit tests |
 | 2 — E2E | `bun run test:e2e` | ~$3.85 | Full skill execution via `claude -p` subprocess |
 | 3 — LLM eval | `bun run test:evals` | ~$0.15 standalone | LLM-as-judge scoring of generated SKILL.md docs |
 | 2+3 | `bun run test:evals` | ~$4 combined | E2E + LLM-as-judge (runs both) |
 
 ```bash
-bun test                     # Tier 1 only (runs on every commit, <5s)
+bun run test:fast            # Tier 0: quickest free checks
+bun test                     # Tier 1: full free suite
 bun run test:e2e             # Tier 2: E2E only (needs EVALS=1, can't run inside Claude Code)
 bun run test:evals           # Tier 2 + 3 combined (~$4/run)
 ```
@@ -198,10 +200,6 @@ Each dimension is scored 1-5. Threshold: every dimension must score **≥ 4**. T
 - Uses `claude-sonnet-4-6` for scoring stability
 - Tests live in `test/skill-llm-eval.test.ts`
 - Calls the Anthropic API directly (not `claude -p`), so it works from anywhere including inside Claude Code
-
-### CI
-
-A GitHub Action (`.github/workflows/skill-docs.yml`) runs `bun run gen:skill-docs --dry-run` on every push and PR. If the generated SKILL.md files differ from what's committed, CI fails. This catches stale docs before they merge.
 
 Tests run against the browse binary directly — they don't require dev mode.
 

@@ -80,7 +80,7 @@ find . -maxdepth 2 -name "*.md" -not -path "./.git/*" -not -path "./node_modules
    - **New features** — new files, new commands, new skills, new capabilities
    - **Changed behavior** — modified services, updated APIs, config changes
    - **Removed functionality** — deleted files, removed commands
-   - **Infrastructure** — build system, test infrastructure, CI
+   - **Infrastructure** — build system, test setup, release workflow
 
 5. Output a brief summary: "Analyzing N files changed across M commits. Found K documentation files to review."
 
@@ -212,7 +212,7 @@ If TODOS.md does not exist, skip this step.
 
 1. **Completed items not yet marked:** Cross-reference the diff against open TODO items. If a
    TODO is clearly completed by the changes in this branch, move it to the Completed section
-   with `**Completed:** vX.Y.Z.W (YYYY-MM-DD)`. Be conservative — only mark items with clear
+   with `**Completed:** vX.Y.Z (YYYY-MM-DD)`. Be conservative — only mark items with clear
    evidence in the diff.
 
 2. **Items needing description updates:** If a TODO references files or components that were
@@ -277,7 +277,7 @@ committing.
 
 ```bash
 git commit -m "$(cat <<'EOF'
-docs: update project documentation for vX.Y.Z.W
+docs: update project documentation for vX.Y.Z
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 EOF

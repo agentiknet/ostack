@@ -108,14 +108,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -180,34 +176,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -428,22 +396,11 @@ Never import secrets, API keys, or credentials in test files. Use environment va
 
 If tests fail → debug once. If still failing → revert all bootstrap changes and warn user.
 
-### B5.5. CI/CD pipeline
+### B5.5. Keep bootstrap local
 
-```bash
-# Check CI provider
-ls -d .github/ 2>/dev/null && echo "CI:github"
-ls .gitlab-ci.yml .circleci/ bitrise.yml 2>/dev/null
-```
+Do **not** create or modify pipeline or automation files as part of test bootstrap.
 
-If `.github/` exists (or no CI detected — default to GitHub Actions):
-Create `.github/workflows/test.yml` with:
-- `runs-on: ubuntu-latest`
-- Appropriate setup action for the runtime (setup-node, setup-ruby, setup-python, etc.)
-- The same test command verified in B5
-- Trigger: push + pull_request
-
-If non-GitHub CI detected → skip CI generation with note: "Detected {provider} — CI pipeline generation supports GitHub Actions only. Add test step to your existing pipeline manually."
+Focus on getting the local test command working and documenting it clearly.
 
 ### B6. Create TESTING.md
 
@@ -477,7 +434,7 @@ Append a `## Testing` section:
 git status --porcelain
 ```
 
-Only commit if there are changes. Stage all bootstrap files (config, test directory, TESTING.md, CLAUDE.md, .github/workflows/test.yml if created):
+Only commit if there are changes. Stage all bootstrap files (config, test directory, TESTING.md, CLAUDE.md):
 `git commit -m "chore: bootstrap test framework ({framework name})"`
 
 ---
@@ -1008,6 +965,6 @@ If the repo has a `TODOS.md`:
 
 11. **Clean working tree required.** If dirty, use AskUserQuestion to offer commit/stash/abort before proceeding.
 12. **One commit per fix.** Never bundle multiple fixes into one commit.
-13. **Only modify tests when generating regression tests in Phase 8e.5.** Never modify CI configuration. Never modify existing tests — only create new test files.
+13. **Only modify tests when generating regression tests in Phase 8e.5.** Never modify existing tests — only create new test files.
 14. **Revert on regression.** If a fix makes things worse, `git revert HEAD` immediately.
 15. **Self-regulate.** Follow the WTF-likelihood heuristic. When in doubt, stop and ask.

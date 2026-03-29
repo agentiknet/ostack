@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * ostack-global-discover — Discover AI coding sessions across Claude Code, Codex CLI, and Gemini CLI.
+ * ostack-global-discover — Discover AI coding sessions across Claude Code and Codex CLI.
  * Resolves each session's working directory to a git repo, deduplicates by normalized remote URL,
  * and outputs structured JSON to stdout.
  *
@@ -17,7 +17,7 @@ import { homedir } from "os";
 // ── Types ──────────────────────────────────────────────────────────────────
 
 interface Session {
-  tool: "claude_code" | "codex" | "gemini";
+  tool: "claude_code" | "codex";
   cwd: string;
 }
 
@@ -25,7 +25,7 @@ interface Repo {
   name: string;
   remote: string;
   paths: string[];
-  sessions: { claude_code: number; codex: number; gemini: number };
+  sessions: { claude_code: number; codex: number };
 }
 
 interface DiscoveryResult {
@@ -35,7 +35,6 @@ interface DiscoveryResult {
   tools: {
     claude_code: { total_sessions: number; repos: number };
     codex: { total_sessions: number; repos: number };
-    gemini: { total_sessions: number; repos: number };
   };
   total_sessions: number;
   total_repos: number;
@@ -352,94 +351,6 @@ function scanCodex(since: Date): Session[] {
   return sessions;
 }
 
-function scanGemini(since: Date): Session[] {
-  const tmpDir = join(homedir(), ".gemini", "tmp");
-  if (!existsSync(tmpDir)) return [];
-
-  // Load projects.json for path mapping
-  const projectsPath = join(homedir(), ".gemini", "projects.json");
-  let projectsMap: Record<string, string> = {}; // name → path
-  if (existsSync(projectsPath)) {
-    try {
-      const data = JSON.parse(readFileSync(projectsPath, { encoding: "utf-8" }));
-      // Format: { projects: { "/path": "name" } } — we want name → path
-      const projects = data.projects || {};
-      for (const [path, name] of Object.entries(projects)) {
-        projectsMap[name as string] = path;
-      }
-    } catch {
-      console.error("Warning: could not parse ~/.gemini/projects.json");
-    }
-  }
-
-  const sessions: Session[] = [];
-  const seenTimestamps = new Map<string, Set<string>>(); // projectName → Set<startTime>
-
-  let projectDirs: string[];
-  try {
-    projectDirs = readdirSync(tmpDir);
-  } catch {
-    return [];
-  }
-
-  for (const projectName of projectDirs) {
-    const chatsDir = join(tmpDir, projectName, "chats");
-    if (!existsSync(chatsDir)) continue;
-
-    // Resolve cwd from projects.json
-    let cwd = projectsMap[projectName] || null;
-
-    // Fallback: check .project_root
-    if (!cwd) {
-      const projectRootFile = join(tmpDir, projectName, ".project_root");
-      if (existsSync(projectRootFile)) {
-        try {
-          cwd = readFileSync(projectRootFile, { encoding: "utf-8" }).trim();
-        } catch {}
-      }
-    }
-
-    if (!cwd || !existsSync(cwd)) continue;
-
-    const seen = seenTimestamps.get(projectName) || new Set<string>();
-    seenTimestamps.set(projectName, seen);
-
-    let files: string[];
-    try {
-      files = readdirSync(chatsDir).filter((f) =>
-        f.startsWith("session-") && f.endsWith(".json")
-      );
-    } catch {
-      continue;
-    }
-
-    for (const file of files) {
-      const filePath = join(chatsDir, file);
-      try {
-        const stat = statSync(filePath);
-        if (stat.mtime < since) continue;
-      } catch {
-        continue;
-      }
-
-      try {
-        const data = JSON.parse(readFileSync(filePath, { encoding: "utf-8" }));
-        const startTime = data.startTime || "";
-
-        // Deduplicate by startTime within project
-        if (startTime && seen.has(startTime)) continue;
-        if (startTime) seen.add(startTime);
-
-        sessions.push({ tool: "gemini", cwd });
-      } catch {
-        console.error(`Warning: could not parse Gemini session ${filePath}`);
-      }
-    }
-  }
-
-  return sessions;
-}
-
 // ── Deduplication ──────────────────────────────────────────────────────────
 
 async function resolveAndDeduplicate(sessions: Session[]): Promise<Repo[]> {
@@ -496,7 +407,7 @@ async function resolveAndDeduplicate(sessions: Session[]): Promise<Repo[]> {
       }
     }
 
-    const sessionCounts = { claude_code: 0, codex: 0, gemini: 0 };
+    const sessionCounts = { claude_code: 0, codex: 0 };
     for (const s of data.sessions) {
       sessionCounts[s.tool]++;
     }
@@ -512,8 +423,8 @@ async function resolveAndDeduplicate(sessions: Session[]): Promise<Repo[]> {
   // Sort by total sessions descending
   repos.sort(
     (a, b) =>
-      b.sessions.claude_code + b.sessions.codex + b.sessions.gemini -
-      (a.sessions.claude_code + a.sessions.codex + a.sessions.gemini)
+      b.sessions.claude_code + b.sessions.codex -
+      (a.sessions.claude_code + a.sessions.codex)
   );
 
   return repos;
@@ -529,13 +440,11 @@ async function main() {
   // Run all scanners
   const ccSessions = scanClaudeCode(sinceDate);
   const codexSessions = scanCodex(sinceDate);
-  const geminiSessions = scanGemini(sinceDate);
-
-  const allSessions = [...ccSessions, ...codexSessions, ...geminiSessions];
+  const allSessions = [...ccSessions, ...codexSessions];
 
   // Summary to stderr
   console.error(
-    `Discovered: ${ccSessions.length} CC sessions, ${codexSessions.length} Codex sessions, ${geminiSessions.length} Gemini sessions`
+    `Discovered: ${ccSessions.length} CC sessions, ${codexSessions.length} Codex sessions`
   );
 
   // Deduplicate
@@ -546,7 +455,6 @@ async function main() {
   // Count per-tool repo counts
   const ccRepos = new Set(repos.filter((r) => r.sessions.claude_code > 0).map((r) => r.remote)).size;
   const codexRepos = new Set(repos.filter((r) => r.sessions.codex > 0).map((r) => r.remote)).size;
-  const geminiRepos = new Set(repos.filter((r) => r.sessions.gemini > 0).map((r) => r.remote)).size;
 
   const result: DiscoveryResult = {
     window: since,
@@ -555,7 +463,6 @@ async function main() {
     tools: {
       claude_code: { total_sessions: ccSessions.length, repos: ccRepos },
       codex: { total_sessions: codexSessions.length, repos: codexRepos },
-      gemini: { total_sessions: geminiSessions.length, repos: geminiRepos },
     },
     total_sessions: allSessions.length,
     total_repos: repos.length,
@@ -566,15 +473,14 @@ async function main() {
   } else {
     // Summary format
     console.log(`Window: ${since} (since ${startDate})`);
-    console.log(`Sessions: ${allSessions.length} total (CC: ${ccSessions.length}, Codex: ${codexSessions.length}, Gemini: ${geminiSessions.length})`);
+    console.log(`Sessions: ${allSessions.length} total (CC: ${ccSessions.length}, Codex: ${codexSessions.length})`);
     console.log(`Repos: ${repos.length} unique`);
     console.log("");
     for (const repo of repos) {
-      const total = repo.sessions.claude_code + repo.sessions.codex + repo.sessions.gemini;
+      const total = repo.sessions.claude_code + repo.sessions.codex;
       const tools = [];
       if (repo.sessions.claude_code > 0) tools.push(`CC:${repo.sessions.claude_code}`);
       if (repo.sessions.codex > 0) tools.push(`Codex:${repo.sessions.codex}`);
-      if (repo.sessions.gemini > 0) tools.push(`Gemini:${repo.sessions.gemini}`);
       console.log(`  ${repo.name} (${total} sessions) — ${tools.join(", ")}`);
       console.log(`    Remote: ${repo.remote}`);
       console.log(`    Paths: ${repo.paths.join(", ")}`);

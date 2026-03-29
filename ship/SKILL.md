@@ -103,14 +103,10 @@ Before building infrastructure, unfamiliar patterns, or anything the runtime mig
 - **Layer 2** (new and popular — search for these). But scrutinize: humans are subject to mania. Search results are inputs to your thinking, not answers.
 - **Layer 3** (first principles — prize these above all). Original observations derived from reasoning about the specific problem. The most valuable of all.
 
-**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it:
+**Eureka moment:** When first-principles reasoning reveals conventional wisdom is wrong, name it clearly:
 "EUREKA: Everyone does X because [assumption]. But [evidence] shows this is wrong. Y is better because [reasoning]."
 
-Log eureka moments:
-```bash
-jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg skill "SKILL_NAME" --arg branch "$(git branch --show-current 2>/dev/null)" --arg insight "ONE_LINE_SUMMARY" '{ts:$ts,skill:$skill,branch:$branch,insight:$insight}' >> ~/.ostack/analytics/eureka.jsonl 2>/dev/null || true
-```
-Replace SKILL_NAME and ONE_LINE_SUMMARY. Runs inline — don't stop the workflow.
+Carry that insight into the rest of the skill instead of treating it like a side note.
 
 **WebSearch fallback:** If WebSearch is unavailable, skip the search step and note: "Search unavailable — proceeding with in-distribution knowledge only."
 
@@ -175,34 +171,6 @@ REASON: [1-2 sentences]
 ATTEMPTED: [what you tried]
 RECOMMENDATION: [what the user should do next]
 ```
-
-## Telemetry (run last)
-
-After the skill workflow completes (success, error, or abort), log the telemetry event.
-Determine the skill name from the `name:` field in this file's YAML frontmatter.
-Determine the outcome from the workflow result (success if completed normally, error
-if it failed, abort if the user interrupted).
-
-**PLAN MODE EXCEPTION — ALWAYS RUN:** This command writes telemetry to
-`~/.ostack/analytics/` (user config directory, not project files). The skill
-preamble already writes to the same directory — this is the same pattern.
-Skipping this command loses session duration and outcome data.
-
-Run this bash:
-
-```bash
-_TEL_END=$(date +%s)
-_TEL_DUR=$(( _TEL_END - _TEL_START ))
-rm -f ~/.ostack/analytics/.pending-"$_SESSION_ID" 2>/dev/null || true
-~/.claude/skills/ostack/bin/ostack-telemetry-log \
-  --skill "SKILL_NAME" --duration "$_TEL_DUR" --outcome "OUTCOME" \
-  --used-browse "USED_BROWSE" --session-id "$_SESSION_ID" 2>/dev/null &
-```
-
-Replace `SKILL_NAME` with the actual skill name from frontmatter, `OUTCOME` with
-success/error/abort, and `USED_BROWSE` with true/false based on whether `$B` was used.
-If you cannot determine the outcome, use "unknown". This runs in the background and
-never blocks the user.
 
 ## Plan Status Footer
 
@@ -275,7 +243,7 @@ You are running the `/ship` workflow. This is a **non-interactive, fully automat
 
 **Never stop for:**
 - Uncommitted changes (always include them)
-- Version bump choice (auto-pick MICRO or PATCH — see Step 4)
+- Version bump choice (auto-pick PATCH unless the change is clearly larger — see Step 4)
 - CHANGELOG content (auto-generate from diff)
 - Commit message approval (auto-commit)
 - Multi-file changesets (auto-split into bisectable commits)
@@ -480,22 +448,11 @@ Never import secrets, API keys, or credentials in test files. Use environment va
 
 If tests fail → debug once. If still failing → revert all bootstrap changes and warn user.
 
-### B5.5. CI/CD pipeline
+### B5.5. Keep bootstrap local
 
-```bash
-# Check CI provider
-ls -d .github/ 2>/dev/null && echo "CI:github"
-ls .gitlab-ci.yml .circleci/ bitrise.yml 2>/dev/null
-```
+Do **not** create or modify pipeline or automation files as part of test bootstrap.
 
-If `.github/` exists (or no CI detected — default to GitHub Actions):
-Create `.github/workflows/test.yml` with:
-- `runs-on: ubuntu-latest`
-- Appropriate setup action for the runtime (setup-node, setup-ruby, setup-python, etc.)
-- The same test command verified in B5
-- Trigger: push + pull_request
-
-If non-GitHub CI detected → skip CI generation with note: "Detected {provider} — CI pipeline generation supports GitHub Actions only. Add test step to your existing pipeline manually."
+Focus on getting the local test command working and documenting it clearly.
 
 ### B6. Create TESTING.md
 
@@ -529,7 +486,7 @@ Append a `## Testing` section:
 git status --porcelain
 ```
 
-Only commit if there are changes. Stage all bootstrap files (config, test directory, TESTING.md, CLAUDE.md, .github/workflows/test.yml if created):
+Only commit if there are changes. Stage all bootstrap files (config, test directory, TESTING.md, CLAUDE.md):
 `git commit -m "chore: bootstrap test framework ({framework name})"`
 
 ---
@@ -1216,18 +1173,17 @@ High-confidence findings (agreed on by multiple sources) should be prioritized f
 
 ## Step 4: Version bump (auto-decide)
 
-1. Read the current `VERSION` file (4-digit format: `MAJOR.MINOR.PATCH.MICRO`)
+1. Read the current `VERSION` file (3-part semver: `MAJOR.MINOR.PATCH`)
 
 2. **Auto-decide the bump level based on the diff:**
    - Count lines changed (`git diff origin/<base>...HEAD --stat | tail -1`)
-   - **MICRO** (4th digit): < 50 lines changed, trivial tweaks, typos, config
-   - **PATCH** (3rd digit): 50+ lines changed, bug fixes, small-medium features
+   - **PATCH** (3rd digit): default for fixes, polish, docs, config, and small-medium features
    - **MINOR** (2nd digit): **ASK the user** — only for major features or significant architectural changes
-   - **MAJOR** (1st digit): **ASK the user** — only for milestones or breaking changes
+   - **MAJOR** (1st digit): **ASK the user** — only for breaking changes or milestones
 
 3. Compute the new version:
    - Bumping a digit resets all digits to its right to 0
-   - Example: `0.19.1.0` + PATCH → `0.19.2.0`
+   - Example: `0.19.1` + PATCH → `0.19.2`
 
 4. Write the new version to the `VERSION` file.
 
@@ -1249,7 +1205,7 @@ High-confidence findings (agreed on by multiple sources) should be prioritized f
      - `### Removed` — removed features
    - Write concise, descriptive bullet points
    - Insert after the file header (line 5), dated today
-   - Format: `## [X.Y.Z.W] - YYYY-MM-DD`
+   - Format: `## [X.Y.Z] - YYYY-MM-DD`
 
 **Do NOT ask the user to describe changes.** Infer from the diff and commit history.
 
@@ -1339,7 +1295,7 @@ Save this summary — it goes into the PR body in Step 8.
 
 ```bash
 git commit -m "$(cat <<'EOF'
-chore: bump version and changelog (vX.Y.Z.W)
+chore: bump version and changelog (vX.Y.Z)
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 EOF
@@ -1466,7 +1422,7 @@ doc updates — the user runs `/ship` and documentation stays current without a 
 - **Never skip the pre-landing review.** If checklist.md is unreadable, stop.
 - **Never force push.** Use regular `git push` only.
 - **Never ask for trivial confirmations** (e.g., "ready to push?", "create PR?"). DO stop for: version bumps (MINOR/MAJOR), pre-landing review findings (ASK items), and Codex structured review [P1] findings (large diffs only).
-- **Always use the 4-digit version format** from the VERSION file.
+- **Always use the 3-part version format** from the VERSION file.
 - **Date format in CHANGELOG:** `YYYY-MM-DD`
 - **Split commits for bisectability** — each commit = one logical change.
 - **TODOS.md completion detection must be conservative.** Only mark items as completed when the diff clearly shows the work is done.

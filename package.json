@@ -1,7 +1,7 @@
 {
   "name": "ostack",
   "version": "0.1.0",
-  "description": "ostack — AI-powered engineering team for Claude Code. Fork of gstack by Garry Tan.",
+  "description": "ostack — AI-powered engineering team for Claude Code and Codex. Fork of gstack by Garry Tan.",
   "license": "MIT",
   "type": "module",
   "bin": {
@@ -12,16 +12,15 @@
     "gen:skill-docs": "bun run scripts/gen-skill-docs.ts",
     "dev": "bun run browse/src/cli.ts",
     "server": "bun run browse/src/server.ts",
-    "test": "bun test browse/test/ test/ --ignore 'test/skill-e2e-*.test.ts' --ignore test/skill-llm-eval.test.ts --ignore test/skill-routing-e2e.test.ts --ignore test/codex-e2e.test.ts --ignore test/gemini-e2e.test.ts",
-    "test:evals": "EVALS=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-llm-eval.test.ts test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts test/gemini-e2e.test.ts",
-    "test:evals:all": "EVALS=1 EVALS_ALL=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-llm-eval.test.ts test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts test/gemini-e2e.test.ts",
-    "test:e2e": "EVALS=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts test/gemini-e2e.test.ts",
-    "test:e2e:all": "EVALS=1 EVALS_ALL=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts test/gemini-e2e.test.ts",
+    "test": "bun test browse/test/ test/ --ignore 'test/skill-e2e-*.test.ts' --ignore test/skill-llm-eval.test.ts --ignore test/skill-routing-e2e.test.ts --ignore test/codex-e2e.test.ts",
+    "test:fast": "bun test test/skill-parser.test.ts test/skill-validation.test.ts test/gen-skill-docs.test.ts browse/test/config.test.ts browse/test/url-validation.test.ts browse/test/path-validation.test.ts browse/test/find-browse.test.ts browse/test/ostack-config.test.ts browse/test/ostack-update-check.test.ts",
+    "test:evals": "EVALS=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-llm-eval.test.ts test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts",
+    "test:evals:all": "EVALS=1 EVALS_ALL=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-llm-eval.test.ts test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts",
+    "test:e2e": "EVALS=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts",
+    "test:e2e:all": "EVALS=1 EVALS_ALL=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts test/codex-e2e.test.ts",
     "test:e2e:fast": "EVALS=1 EVALS_FAST=1 bun test --retry 2 --concurrent --max-concurrency ${EVALS_CONCURRENCY:-15} test/skill-e2e-*.test.ts test/skill-routing-e2e.test.ts",
     "test:codex": "EVALS=1 bun test test/codex-e2e.test.ts",
     "test:codex:all": "EVALS=1 EVALS_ALL=1 bun test test/codex-e2e.test.ts",
-    "test:gemini": "EVALS=1 bun test test/gemini-e2e.test.ts",
-    "test:gemini:all": "EVALS=1 EVALS_ALL=1 bun test test/gemini-e2e.test.ts",
     "skill:check": "bun run scripts/skill-check.ts",
     "dev:skill": "bun run scripts/dev-skill.ts",
     "start": "bun run browse/src/server.ts",
@@ -29,8 +28,7 @@
     "eval:compare": "bun run scripts/eval-compare.ts",
     "eval:summary": "bun run scripts/eval-summary.ts",
     "eval:watch": "bun run scripts/eval-watch.ts",
-    "eval:select": "bun run scripts/eval-select.ts",
-    "analytics": "bun run scripts/analytics.ts"
+    "eval:select": "bun run scripts/eval-select.ts"
   },
   "dependencies": {
     "playwright": "^1.58.2",

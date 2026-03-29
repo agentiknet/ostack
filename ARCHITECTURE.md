@@ -4,7 +4,7 @@ This document explains **why** ostack is built the way it is. For setup and comm
 
 ## The core idea
 
-ostack gives Claude Code a persistent browser and a set of opinionated workflow skills. The browser is the hard part — everything else is Markdown.
+ostack gives Claude Code and Codex a persistent browser and a set of opinionated workflow skills. The browser is the hard part — everything else is Markdown.
 
 The key insight: an AI agent interacting with a browser needs **sub-second latency** and **persistent state**. If every command cold-starts a browser, you're waiting 3-5 seconds per tool call. If the browser dies between commands, you lose cookies, tabs, and login sessions. So ostack runs a long-lived Chromium daemon that the CLI talks to over localhost HTTP.
 
@@ -204,7 +204,7 @@ Templates contain the workflows, tips, and examples that require human judgment.
 | `{{QA_METHODOLOGY}}` | `gen-skill-docs.ts` | Shared QA methodology block for /qa and /qa-only |
 | `{{DESIGN_METHODOLOGY}}` | `gen-skill-docs.ts` | Shared design audit methodology for /plan-design-review and /design-review |
 | `{{REVIEW_DASHBOARD}}` | `gen-skill-docs.ts` | Review Readiness Dashboard for /ship pre-flight |
-| `{{TEST_BOOTSTRAP}}` | `gen-skill-docs.ts` | Test framework detection, bootstrap, CI/CD setup for /qa, /ship, /design-review |
+| `{{TEST_BOOTSTRAP}}` | `gen-skill-docs.ts` | Test framework detection, bootstrap, and local test setup for /qa, /ship, /design-review |
 | `{{CODEX_PLAN_REVIEW}}` | `gen-skill-docs.ts` | Optional cross-model plan review (Codex or Claude subagent fallback) for /plan-ceo-review and /plan-eng-review |
 
 This is structurally sound — if a command exists in code, it appears in docs. If it doesn't exist, it can't appear.
@@ -217,25 +217,26 @@ Every skill starts with a `{{PREAMBLE}}` block that runs before the skill's own 
 2. **Session tracking** — touches `~/.ostack/sessions/$PPID` and counts active sessions (files modified in the last 2 hours). When 3+ sessions are running, all skills enter "ELI16 mode" — every question re-grounds the user on context because they're juggling windows.
 3. **Contributor mode** — reads `ostack_contributor` from config. When true, the agent files casual field reports to `~/.ostack/contributor-logs/` when ostack itself misbehaves.
 4. **AskUserQuestion format** — universal format: context, question, `RECOMMENDATION: Choose X because ___`, lettered options. Consistent across all skills.
-5. **Search Before Building** — before building infrastructure or unfamiliar patterns, search first. Three layers of knowledge: tried-and-true (Layer 1), new-and-popular (Layer 2), first-principles (Layer 3). When first-principles reasoning reveals conventional wisdom is wrong, the agent names the "eureka moment" and logs it. See `ETHOS.md` for the full builder philosophy.
+5. **Search Before Building** — before building infrastructure or unfamiliar patterns, search first. Three layers of knowledge: tried-and-true (Layer 1), new-and-popular (Layer 2), first-principles (Layer 3). When first-principles reasoning reveals conventional wisdom is wrong, the agent names the "eureka moment" and carries it into the rest of the workflow. See `ETHOS.md` for the full builder philosophy.
 
 ### Why committed, not generated at runtime?
 
 Three reasons:
 
 1. **Claude reads SKILL.md at skill load time.** There's no build step when a user invokes `/browse`. The file must already exist and be correct.
-2. **CI can validate freshness.** `gen:skill-docs --dry-run` + `git diff --exit-code` catches stale docs before merge.
+2. **Local checks can validate freshness.** `gen:skill-docs --dry-run` + `git diff --exit-code` catches stale docs before merge.
 3. **Git blame works.** You can see when a command was added and in which commit.
 
 ### Template test tiers
 
 | Tier | What | Cost | Speed |
 |------|------|------|-------|
-| 1 — Static validation | Parse every `$B` command in SKILL.md, validate against registry | Free | <2s |
+| 0 — Fast validation | Focused high-signal checks via `bun run test:fast` | Free | ~seconds |
+| 1 — Static validation | Parse every `$B` command in SKILL.md, validate against registry | Free | ~1 min |
 | 2 — E2E via `claude -p` | Spawn real Claude session, run each skill, check for errors | ~$3.85 | ~20min |
 | 3 — LLM-as-judge | Sonnet scores docs on clarity/completeness/actionability | ~$0.15 | ~30s |
 
-Tier 1 runs on every `bun test`. Tiers 2+3 are gated behind `EVALS=1`. The idea is: catch 95% of issues for free, use LLMs only for judgment calls.
+Tier 0 is for fast iteration, Tier 1 is the full free suite, and Tiers 2+3 are gated behind `EVALS=1`. The idea is: catch most issues cheaply, use LLMs only for judgment calls.
 
 ## Command dispatch
 
@@ -345,11 +346,12 @@ The `EvalCollector` accumulates test results and writes them in two ways:
 
 | Tier | What | Cost | Speed |
 |------|------|------|-------|
-| 1 — Static validation | Parse `$B` commands, validate against registry, observability unit tests | Free | <5s |
+| 0 — Fast validation | Focused high-signal checks via `bun run test:fast` | Free | ~seconds |
+| 1 — Static validation | Parse `$B` commands, validate against registry, observability unit tests | Free | ~1 min |
 | 2 — E2E via `claude -p` | Spawn real Claude session, run each skill, scan for errors | ~$3.85 | ~20min |
 | 3 — LLM-as-judge | Sonnet scores docs on clarity/completeness/actionability | ~$0.15 | ~30s |
 
-Tier 1 runs on every `bun test`. Tiers 2+3 are gated behind `EVALS=1`. The idea: catch 95% of issues for free, use LLMs only for judgment calls and integration testing.
+Tier 0 is for fast iteration, Tier 1 is the full free suite, and Tiers 2+3 are gated behind `EVALS=1`. The idea: catch most issues cheaply, use LLMs only for judgment calls and integration testing.
 
 ## What's intentionally not here
 

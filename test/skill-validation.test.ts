@@ -692,8 +692,8 @@ describe('office-hours skill structure', () => {
     expect(content).toContain('quality score');
   });
 
-  test('contains spec review metrics path', () => {
-    expect(content).toContain('spec-review.jsonl');
+  test('does not persist spec review metrics', () => {
+    expect(content).not.toContain('spec-review.jsonl');
   });
 
   test('contains convergence guard', () => {
@@ -1074,10 +1074,11 @@ describe('Test Bootstrap ({{TEST_BOOTSTRAP}}) integration', () => {
     expect(content).toContain('ExUnit');
   });
 
-  test('bootstrap includes CI/CD pipeline generation', () => {
+  test('bootstrap stays local-only and avoids pipeline generation', () => {
     const content = fs.readFileSync(path.join(ROOT, 'qa', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('.github/workflows/test.yml');
-    expect(content).toContain('GitHub Actions');
+    expect(content).toContain('Keep bootstrap local');
+    expect(content).not.toContain('.github/workflows/test.yml');
+    expect(content).not.toContain('GitHub Actions');
   });
 
   test('bootstrap includes first real tests step', () => {

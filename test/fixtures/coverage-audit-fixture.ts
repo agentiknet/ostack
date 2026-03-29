@@ -26,7 +26,7 @@ export function createCoverageAuditFixture(dir: string): void {
   fs.writeFileSync(path.join(dir, 'vitest.config.ts'),
     `import { defineConfig } from 'vitest/config';\nexport default defineConfig({ test: {} });\n`);
 
-  fs.writeFileSync(path.join(dir, 'VERSION'), '0.1.0.0\n');
+  fs.writeFileSync(path.join(dir, 'VERSION'), '0.1.0\n');
   fs.writeFileSync(path.join(dir, 'CHANGELOG.md'), '# Changelog\n');
 
   // Create source file with multiple code paths

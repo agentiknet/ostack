@@ -12,5 +12,5 @@ ostack is a fork of [gstack](https://github.com/garrytan/gstack) by Garry Tan, c
 - Merged cognitive patterns in /plan-ceo-review
 - Compressed communication style across all skills
 - Amplified code quality standards (Garry's engineering rigor x10)
-- Removed telemetry and garryslist.org references
+- Removed garryslist.org references
 - Added obrain integration for personal context injection
