@@ -6,7 +6,7 @@ description: |
   elements, verify state, diff before/after, take annotated screenshots, test responsive
   layouts, forms, uploads, dialogs, and capture bug evidence. Use when asked to open or
   test a site, verify a deployment, dogfood a user flow, or file a bug with screenshots.
-  Also suggest adjacent ostack skills by stage: brainstorm /office-hours; strategy
+  Also suggest adjacent ostack skills by stage: bootstrap /startup; brainstorm /office-hours; strategy
   /plan-ceo-review; architecture /plan-eng-review; design /plan-design-review or
   /design-consultation; auto-review /autoplan; debugging /investigate; QA /qa; code review
   /review; visual audit /design-review; shipping /ship; docs /document-release; retro
